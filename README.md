@@ -1,13 +1,3 @@
- (cd "$(git rev-parse --show-toplevel)" && git apply --3way <<'EOF' 
-diff --git a//dev/null b/README.md
-index 0000000000000000000000000000000000000000..411c8f9278def0408b6686c7ef54aa0cbced37d7 100644
---- a//dev/null
-+++ b/README.md
-@@ -0,0 +1,102 @@
-+# SareKey
-+
-+SareKey is a monorepo containing a small game lobby backend and a React front‑end.  The backend exposes HTTP APIs for user authentication and lobby management while the front‑end allows users to sign in, create lobbies and join games.
-+
 +## Repository layout
 +
 +```
