@@ -2,23 +2,6 @@
 
 Bu proje, çok oyunculu oyunların oynanabildiği bir web tabanlı oyun merkezi platformudur. Kullanıcılar bu merkezde oturum açabilir, çeşitli oyunlara ait lobiler oluşturabilir, lobilerde bir araya gelip oyunlar oynayabilirler. Platform, Lerna tabanlı monorepo yapısı kullanarak oyun merkezini ve oyunları ayrı paketlerde yönetir.
 
-🌐 Proje Yapısı
-
-sar3/
-├── index.js                # Sunucu (backend) giris noktasi
-├── users.json              # Kullanıcı verileri
-├── lobbies.json            # Lobi verileri
-├── lerna.json              # Lerna konfigürasyonu
-├── package.json            # Workspace ayarları
-│
-├── packages/
-│   ├── oyun-merkezi/       # Oyun merkezi (frontend - React)
-│   │   ├── src/            # Tüm React sayfaları, bileşenleri, context
-│   │   ├── index.html      # Vite giriş
-│   │   …
-│   └── oyunlar/
-│       └── tombala/        # Tombala oyunu paketi (React bileşenleri ile)
-
 ⚙️ Teknolojiler
 
 React 18 (frontend)
