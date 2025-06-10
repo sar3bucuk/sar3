@@ -1,101 +1,94 @@
-+## Repository layout
-+
-+```
-+/ (repo root)
-+├─ index.js                   – Express backend server
-+├─ users.json                 – Stored user data (JSON)
-+├─ lobbies.json               – Stored lobby data (JSON)
-+├─ packages/
-+│  ├─ oyun-merkezi/           – React front‑end (Vite)
-+│  └─ oyunlar/                – Game components (e.g. Tombala)
-+```
-+
-+### Backend (Node.js / Express)
-+
-+The server defined in `index.js` listens on **port 4000**.  It provides endpoints for:
-+
-+- `POST /api/auth/login` – authenticate a user
-+- `POST /api/auth/register` – create a new account
-+- `POST /api/auth/logout` – end the current session
-+- `GET  /api/auth/user` – return the logged‑in user
-+- `POST /api/lobbies` – create a new lobby
-+- `GET  /api/lobbies` – list available lobbies
-+- `POST /api/lobbies/join` – join an existing lobby
-+- `POST /api/lobbies/leave` – leave a lobby
-+- `POST /api/lobbies/delete` – delete a lobby (creator only)
-+- `POST /api/lobbies/update` – update lobby details (creator only)
-+
-+Data is persisted inside `users.json` and `lobbies.json` in the project root.
-+
-+Start the backend with:
-+
-+```bash
-+node index.js
-+```
-+
-+### Front‑end (packages/oyun-merkezi)
-+
-+The front‑end is a Vite + React application located under `packages/oyun-merkezi`.  It uses Material UI for styling and communicates with the backend on port 4000.
-+
-+Useful scripts from this package:
-+
-+```bash
-+# start the development server
-+npm run dev
-+
-+# create a production build in ./dist
-+npm run build
-+```
-+
-+### Games package (packages/oyunlar)
-+
-+`packages/oyunlar` contains placeholder components for games (such as `Tombala`).  These components can be imported by the front‑end when implementing actual game logic.
-+
-+## Oyun Merkezi sayfaları
-+
-+React tabanlı ön yüz `packages/oyun-merkezi/src` klasöründe yer alır. Başlıca sayfalar ve görevleri:
-+
-+1. **DashboardPage.jsx** (`packages/oyun-merkezi/src/pages/DashboardPage.jsx`)
-+   - Oyun ve lobi listelerini görüntüler.
-+   - Yeni lobi oluşturma, var olanlara katılma veya ayrılma işlemlerini yapar.
-+   - Lobi sahibi kullanıcılar için güncelleme ve silme seçenekleri sunar.
-+   - Kullanıcı hesabı ile oturumu kapatma butonu içerir.
-+
-+2. **LoginPage.jsx** (`packages/oyun-merkezi/src/pages/LoginPage.jsx`)
-+   - Giriş formunu barındırır ve "Beni Hatırla" özelliğini destekler.
-+   - Başarılı oturum açma sonrasında kullanıcıyı panoya yönlendirir.
-+
-+3. **RegisterPage.jsx** (`packages/oyun-merkezi/src/pages/RegisterPage.jsx`)
-+   - Yeni kullanıcı kayıt formunu içerir.
-+   - Şifreyi istemci tarafında hashleyerek gönderir.
-+
-+4. **OyunDetay.jsx** (`packages/oyun-merkezi/src/pages/OyunDetay.jsx`)
-+   - Seçilen oyuna ait detaylar için şablon bir sayfadır.
-+
-+Ek olarak `packages/oyunlar` paketinde, örnek olarak `src/pages/TombalaOyunEkrani.jsx` dosyası oyun ekranı bileşenini temsil eder.
-+
-+## Getting started
-+
-+1. Install dependencies for the entire monorepo:
-+   ```bash
-+   npm install
-+   ```
-+2. Start the backend:
-+   ```bash
-+   node index.js
-+   ```
-+3. In another terminal, start the front‑end:
-+   ```bash
-+   cd packages/oyun-merkezi
-+   npm run dev
-+   ```
-+   The application will be available at <http://localhost:5173>.
-+
-+The front‑end expects the backend to be running locally on port 4000 (see the API calls in the source code).
-+
-+## License
-+
-+This project is published without an explicit license file.
- 
-EOF
-)
+🎮 Oyun Merkezi (Game Hub) Projesi
+
+Bu proje, çok oyunculu oyunların oynanabildiği bir web tabanlı oyun merkezi platformudur. Kullanıcılar bu merkezde oturum açabilir, çeşitli oyunlara ait lobiler oluşturabilir, lobilerde bir araya gelip oyunlar oynayabilirler. Platform, Lerna tabanlı monorepo yapısı kullanarak oyun merkezini ve oyunları ayrı paketlerde yönetir.
+
+🌐 Proje Yapısı
+
+sar3/
+├── index.js                # Sunucu (backend) giris noktasi
+├── users.json              # Kullanıcı verileri
+├── lobbies.json            # Lobi verileri
+├── lerna.json              # Lerna konfigürasyonu
+├── package.json            # Workspace ayarları
+│
+├── packages/
+│   ├── oyun-merkezi/       # Oyun merkezi (frontend - React)
+│   │   ├── src/            # Tüm React sayfaları, bileşenleri, context
+│   │   ├── index.html      # Vite giriş
+│   │   …
+│   └── oyunlar/
+│       └── tombala/        # Tombala oyunu paketi (React bileşenleri ile)
+
+⚙️ Teknolojiler
+
+React 18 (frontend)
+
+Express.js (backend)
+
+Lerna v8 (monorepo yönetimi)
+
+Material UI v6 (görünüm)
+
+Vite (frontend derleyici)
+
+SHA-256 (şifreleme)
+
+MemoryStore (session yönetimi)
+
+users.json, lobbies.json (veri dosyaları)
+
+📂 Ana Modüller
+
+1. Kullanıcı Girişi & Kayıt
+
+SHA-256 şifreleme ile kullanıcı kaydı ve oturum açma
+
+Session tabanlı oturum yönetimi (express-session)
+
+"Beni Hatırla" ve "Şifremi Unuttum" alanları
+
+2. Dashboard
+
+Lobilerin listelenmesi
+
+Lobiler için filtreleme (arama, şifreli vs.)
+
+Yeni lobi oluşturma (normal/etkinlik)
+
+Lobi bilgileri: oyun, başlangıç-bitiş, kurucu, şifre durumu
+
+Lobiye katılma / ayrılma işlemleri
+
+Kurucu için: lobiyi güncelleme/silme
+
+Lobiye katılanları listeleme
+
+Lobinin bağlantı linkini kopyalama
+
+3. Lobilerde Otomatik Davranışlar
+
+Kurucu lobiden çıkarsa 8 saat içinde lobi kapanır
+
+Etkinlik lobileri her zaman öncelikli listelenir
+
+Etkinliğe 24 saatten az kaldıysa geri sayım görünür
+
+4. Oyun Sayfaları
+
+TombalaOyunEkrani sayfası oyunlar/tombala altında
+
+Frontend tarafından /tombala rotasından ulaşılır
+
+React bileşenleri: OyunAlani, OyuncuListesi, CekilenSayilar vb.
+
+🌟 Kurulum ve Başlatma
+
+# 1. Ana dizinde bağlılıkları yükle
+npm install
+
+# 2. Frontend'i başlat
+cd packages/oyun-merkezi
+npm run dev
+
+# 3. Backend'i başlat
+node index.js
