@@ -4,9 +4,10 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem,
   FormControl, InputLabel, Checkbox, FormControlLabel
 } from '@mui/material';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+
 const oyunlar = ['Tombala', 'Kelime Oyunu', 'Sayı Tahmini'];
 
 const DashboardPage = () => {
@@ -31,15 +32,15 @@ const DashboardPage = () => {
   }, []);
 
   useEffect(() => {
-  if (secilenLobi) {
-    setLobiAdi(secilenLobi.ad);
-    setTip(secilenLobi.tip);
-    setSecilenOyun(secilenLobi.oyun);
-    setSifreliMi(secilenLobi.sifreli);
-    setSifre(secilenLobi.sifre || '');
-    setBaslangicTarihi(secilenLobi.baslangicTarihi || '');
-    setBitisTarihi(secilenLobi.bitisTarihi || '');
-  }
+    if (secilenLobi) {
+      setLobiAdi(secilenLobi.ad);
+      setTip(secilenLobi.tip);
+      setSecilenOyun(secilenLobi.oyun);
+      setSifreliMi(secilenLobi.sifreli);
+      setSifre(secilenLobi.sifre || '');
+      setBaslangicTarihi(secilenLobi.baslangicTarihi || '');
+      setBitisTarihi(secilenLobi.bitisTarihi || '');
+    }
   }, [secilenLobi]);
 
   const handleLogout = async () => {
@@ -65,43 +66,27 @@ const DashboardPage = () => {
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
 
-    const etkinlikGeriSayim = (lobi) => {
-      const now = new Date();
-      const start = new Date(lobi.baslangicTarihi);
-      const diffMs = start - now;
-      const diffHrs = diffMs / (1000 * 60 * 60);
+  const etkinlikGeriSayim = (lobi) => {
+    const now = new Date();
+    const start = new Date(lobi.baslangicTarihi);
+    const diffMs = start - now;
+    const diffHrs = diffMs / (1000 * 60 * 60);
 
-      if (diffHrs > 24) {
-        return `Başlangıç: ${start.toLocaleString()}`;
-      } else if (diffHrs > 0) {
-        const hours = Math.floor(diffMs / (1000 * 60 * 60));
-        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-        return `Başlamasına kalan: ${hours} saat ${minutes} dakika`;
-      } else {
-        return `Etkinlik başladı`;
-      }
-    };
-
-    const formatEtkinlikBilgisi = (baslangicStr) => {
-      const now = new Date();
-      const baslangic = new Date(baslangicStr);
-      const farkMs = baslangic - now;
-
-      if (farkMs > 24 * 60 * 60 * 1000) {
-        return `Başlangıç: ${baslangic.toLocaleString()}`;
-      } else if (farkMs > 0) {
-        const saat = Math.floor(farkMs / (1000 * 60 * 60));
-        const dakika = Math.floor((farkMs % (1000 * 60 * 60)) / (1000 * 60));
-        return `Başlamasına ${saat} saat ${dakika} dakika kaldı`;
-      } else {
-        return `Etkinlik başladı`;
-      }
-    };
+    if (diffHrs > 24) {
+      return `Başlangıç: ${start.toLocaleString()}`;
+    } else if (diffHrs > 0) {
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      return `Başlamasına kalan: ${hours} saat ${minutes} dakika`;
+    } else {
+      return `Etkinlik başladı`;
+    }
+  };
 
   return (
     <Box sx={{ padding: 4 }}>
       <Typography variant="h4" gutterBottom>
-        Hoş geldin, {user?.username}#{user?.tag}
+        Hoş geldin, {user?.username ? `${user.username}#${user.tag}` : 'Misafir'}
       </Typography>
 
       <Grid container spacing={3}>
@@ -124,54 +109,6 @@ const DashboardPage = () => {
             </CardContent>
           </Card>
         </Grid>
-
-        <Dialog open={openModal} onClose={() => setOpenModal(false)}>
-          <DialogTitle>Yeni Lobi Oluştur</DialogTitle>
-          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField label="Lobi Adı" fullWidth value={lobiAdi} onChange={(e) => setLobiAdi(e.target.value)} />
-            <FormControl fullWidth>
-              <InputLabel id="tip-label">Lobi Tipi</InputLabel>
-              <Select labelId="tip-label" value={tip} label="Lobi Tipi" onChange={(e) => setTip(e.target.value)}>
-                <MenuItem value="normal">Normal</MenuItem>
-                <MenuItem value="etkinlik">Etkinlik</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth>
-              <InputLabel id="oyun-label">Oyun</InputLabel>
-              <Select labelId="oyun-label" value={secilenOyun} label="Oyun" onChange={(e) => setSecilenOyun(e.target.value)}>
-                {oyunlar.map((oyun, i) => (
-                  <MenuItem key={i} value={oyun}>{oyun}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            {tip === 'etkinlik' && (
-              <>
-                <TextField label="Başlangıç Tarihi" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} value={baslangicTarihi} onChange={(e) => setBaslangicTarihi(e.target.value)} />
-                <TextField label="Bitiş Tarihi" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} value={bitisTarihi} onChange={(e) => setBitisTarihi(e.target.value)} />
-              </>
-            )}
-            <FormControlLabel control={<Checkbox checked={sifreliMi} onChange={(e) => setSifreliMi(e.target.checked)} />} label="Şifreli Lobi" />
-            {sifreliMi && <TextField label="Lobi Şifresi" fullWidth value={sifre} onChange={(e) => setSifre(e.target.value)} />}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenModal(false)}>İptal</Button>
-            <Button variant="contained" onClick={async () => {
-              try {
-                const kurucu = `${user.username}#${user.tag}`;
-                await axios.post('http://localhost:4000/api/lobbies', {
-                  lobiAdi, tip, sifreliMi, sifre, kurucu, baslangicTarihi, bitisTarihi, secilenOyun
-                }, { withCredentials: true });
-                const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
-                setLobiler(lobilerGuncel.data);
-                alert("Lobi başarıyla oluşturuldu!");
-                setOpenModal(false);
-              } catch (error) {
-                console.error("Lobi oluşturma hatası:", error.response?.data || error.message);
-                alert("Lobi oluşturulamadı.");
-              }
-            }}>Oluştur</Button>
-          </DialogActions>
-        </Dialog>
 
         <Grid item xs={12} md={6}>
           <Card>
@@ -208,6 +145,54 @@ const DashboardPage = () => {
         </Grid>
       </Grid>
 
+      <Dialog open={openModal} onClose={() => setOpenModal(false)}>
+        <DialogTitle>Yeni Lobi Oluştur</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <TextField label="Lobi Adı" fullWidth value={lobiAdi} onChange={(e) => setLobiAdi(e.target.value)} />
+          <FormControl fullWidth>
+            <InputLabel id="tip-label">Lobi Tipi</InputLabel>
+            <Select labelId="tip-label" value={tip} label="Lobi Tipi" onChange={(e) => setTip(e.target.value)}>
+              <MenuItem value="normal">Normal</MenuItem>
+              <MenuItem value="etkinlik">Etkinlik</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth>
+            <InputLabel id="oyun-label">Oyun</InputLabel>
+            <Select labelId="oyun-label" value={secilenOyun} label="Oyun" onChange={(e) => setSecilenOyun(e.target.value)}>
+              {oyunlar.map((oyun, i) => (
+                <MenuItem key={i} value={oyun}>{oyun}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          {tip === 'etkinlik' && (
+            <>
+              <TextField label="Başlangıç Tarihi" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} value={baslangicTarihi} onChange={(e) => setBaslangicTarihi(e.target.value)} />
+              <TextField label="Bitiş Tarihi" type="datetime-local" fullWidth InputLabelProps={{ shrink: true }} value={bitisTarihi} onChange={(e) => setBitisTarihi(e.target.value)} />
+            </>
+          )}
+          <FormControlLabel control={<Checkbox checked={sifreliMi} onChange={(e) => setSifreliMi(e.target.checked)} />} label="Şifreli Lobi" />
+          {sifreliMi && <TextField label="Lobi Şifresi" fullWidth value={sifre} onChange={(e) => setSifre(e.target.value)} />}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenModal(false)}>İptal</Button>
+          <Button variant="contained" onClick={async () => {
+            try {
+              const kurucu = `${user.username}#${user.tag}`;
+              await axios.post('http://localhost:4000/api/lobbies', {
+                lobiAdi, tip, sifreliMi, sifre, kurucu, baslangicTarihi, bitisTarihi, secilenOyun
+              }, { withCredentials: true });
+              const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
+              setLobiler(lobilerGuncel.data);
+              alert("Lobi başarıyla oluşturuldu!");
+              setOpenModal(false);
+            } catch (error) {
+              console.error("Lobi oluşturma hatası:", error.response?.data || error.message);
+              alert("Lobi oluşturulamadı.");
+            }
+          }}>Oluştur</Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={Boolean(secilenLobi)} onClose={() => setSecilenLobi(null)}>
         <DialogTitle>Lobi Detayı</DialogTitle>
         <DialogContent dividers sx={{ minWidth: 300 }}>
@@ -240,31 +225,31 @@ const DashboardPage = () => {
             </>
           )}
 
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={async () => {
-                try {
-                  const kullanici = `${user.username}#${user.tag}`;
-                  await axios.post('http://localhost:4000/api/lobbies/join', {
-                    lobiId: secilenLobi.id,
-                    kullanici,
-                    sifreGirilen: sifre
-                  }, { withCredentials: true });
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={async () => {
+              try {
+                const kullanici = `${user.username}#${user.tag}`;
+                await axios.post('http://localhost:4000/api/lobbies/join', {
+                  lobiId: secilenLobi.id,
+                  kullanici,
+                  sifreGirilen: sifre
+                }, { withCredentials: true });
 
-                  alert("Lobiye başarıyla katıldınız!");
+                alert("Lobiye başarıyla katıldınız!");
 
-                  const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
-                  setLobiler(lobilerGuncel.data);
-                  setSecilenLobi(null);
+                const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
+                setLobiler(lobilerGuncel.data);
+                setSecilenLobi(null);
 
-                } catch (error) {
-                  alert(error.response?.data?.message || "Katılım başarısız");
-                }
-              }}
-            >
-              Katıl
-            </Button>
+              } catch (error) {
+                alert(error.response?.data?.message || "Katılım başarısız");
+              }
+            }}
+          >
+            Katıl
+          </Button>
 
           {user && secilenLobi && (
             <Button variant="outlined" color="error" fullWidth sx={{ mt: 2 }} onClick={async () => {
@@ -288,147 +273,147 @@ const DashboardPage = () => {
           )}
 
           {user && `${user.username}#${user.tag}` === secilenLobi?.kurucu && (
-          <Button
-            variant="outlined"
-            color="error"
-            fullWidth
-            sx={{ mt: 2 }}
-            onClick={async () => {
-              if (!window.confirm("Bu lobiyi silmek istediğine emin misin?")) return;
-              try {
-                await axios.post('http://localhost:4000/api/lobbies/delete', {
-                  lobiId: secilenLobi.id,
-                  kurucu: `${user.username}#${user.tag}`
-                }, { withCredentials: true });
-
-                alert("Lobi silindi.");
-                const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
-                setLobiler(lobilerGuncel.data);
-                setSecilenLobi(null);
-              } catch (error) {
-                alert(error.response?.data?.message || "Silme başarısız");
-              }
-            }}
-          >
-            Lobiyi Sil
-          </Button>
-        )}
-
-        {user && `${user.username}#${user.tag}` === secilenLobi?.kurucu && (
-        <>
-          <TextField
-            label="Lobi Adı"
-            fullWidth
-            sx={{ mt: 2 }}
-            value={lobiAdi}
-            onChange={(e) => setLobiAdi(e.target.value)}
-          />
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel id="tip-guncelle-label">Lobi Tipi</InputLabel>
-            <Select
-              labelId="tip-guncelle-label"
-              value={tip}
-              label="Lobi Tipi"
-              onChange={(e) => setTip(e.target.value)}
-            >
-              <MenuItem value="normal">Normal</MenuItem>
-              <MenuItem value="etkinlik">Etkinlik</MenuItem>
-            </Select>
-          </FormControl>
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel id="oyun-guncelle-label">Oyun</InputLabel>
-            <Select
-              labelId="oyun-guncelle-label"
-              value={secilenOyun}
-              label="Oyun"
-              onChange={(e) => setSecilenOyun(e.target.value)}
-            >
-              {oyunlar.map((oyun, i) => (
-                <MenuItem key={i} value={oyun}>{oyun}</MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControlLabel
-            sx={{ mt: 2 }}
-            control={<Checkbox checked={sifreliMi} onChange={(e) => setSifreliMi(e.target.checked)} />}
-            label="Şifreli Lobi"
-          />
-          {sifreliMi && (
-            <TextField
-              label="Şifre"
+            <Button
+              variant="outlined"
+              color="error"
               fullWidth
-              value={sifre}
-              onChange={(e) => setSifre(e.target.value)}
-            />
+              sx={{ mt: 2 }}
+              onClick={async () => {
+                if (!window.confirm("Bu lobiyi silmek istediğine emin misin?")) return;
+                try {
+                  await axios.post('http://localhost:4000/api/lobbies/delete', {
+                    lobiId: secilenLobi.id,
+                    kurucu: `${user.username}#${user.tag}`
+                  }, { withCredentials: true });
+
+                  alert("Lobi silindi.");
+                  const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
+                  setLobiler(lobilerGuncel.data);
+                  setSecilenLobi(null);
+                } catch (error) {
+                  alert(error.response?.data?.message || "Silme başarısız");
+                }
+              }}
+            >
+              Lobiyi Sil
+            </Button>
           )}
-          {tip === 'etkinlik' && (
+
+          {user && `${user.username}#${user.tag}` === secilenLobi?.kurucu && (
             <>
               <TextField
-                label="Başlangıç Tarihi"
-                type="datetime-local"
+                label="Lobi Adı"
                 fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={baslangicTarihi}
-                onChange={(e) => setBaslangicTarihi(e.target.value)}
                 sx={{ mt: 2 }}
+                value={lobiAdi}
+                onChange={(e) => setLobiAdi(e.target.value)}
               />
-              <TextField
-                label="Bitiş Tarihi"
-                type="datetime-local"
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel id="tip-guncelle-label">Lobi Tipi</InputLabel>
+                <Select
+                  labelId="tip-guncelle-label"
+                  value={tip}
+                  label="Lobi Tipi"
+                  onChange={(e) => setTip(e.target.value)}
+                >
+                  <MenuItem value="normal">Normal</MenuItem>
+                  <MenuItem value="etkinlik">Etkinlik</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel id="oyun-guncelle-label">Oyun</InputLabel>
+                <Select
+                  labelId="oyun-guncelle-label"
+                  value={secilenOyun}
+                  label="Oyun"
+                  onChange={(e) => setSecilenOyun(e.target.value)}
+                >
+                  {oyunlar.map((oyun, i) => (
+                    <MenuItem key={i} value={oyun}>{oyun}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControlLabel
+                sx={{ mt: 2 }}
+                control={<Checkbox checked={sifreliMi} onChange={(e) => setSifreliMi(e.target.checked)} />}
+                label="Şifreli Lobi"
+              />
+              {sifreliMi && (
+                <TextField
+                  label="Şifre"
+                  fullWidth
+                  value={sifre}
+                  onChange={(e) => setSifre(e.target.value)}
+                />
+              )}
+              {tip === 'etkinlik' && (
+                <>
+                  <TextField
+                    label="Başlangıç Tarihi"
+                    type="datetime-local"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    value={baslangicTarihi}
+                    onChange={(e) => setBaslangicTarihi(e.target.value)}
+                    sx={{ mt: 2 }}
+                  />
+                  <TextField
+                    label="Bitiş Tarihi"
+                    type="datetime-local"
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                    value={bitisTarihi}
+                    onChange={(e) => setBitisTarihi(e.target.value)}
+                    sx={{ mt: 2 }}
+                  />
+                </>
+              )}
+              <Button
+                variant="contained"
                 fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={bitisTarihi}
-                onChange={(e) => setBitisTarihi(e.target.value)}
                 sx={{ mt: 2 }}
-              />
+                onClick={async () => {
+                  try {
+                    await axios.post('http://localhost:4000/api/lobbies/update', {
+                      lobiId: secilenLobi.id,
+                      kurucu: `${user.username}#${user.tag}`,
+                      lobiAdi,
+                      tip,
+                      sifreliMi,
+                      sifre,
+                      oyun: secilenOyun,
+                      baslangicTarihi,
+                      bitisTarihi
+                    }, { withCredentials: true });
+
+                    alert("Lobi güncellendi!");
+                    const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
+                    setLobiler(lobilerGuncel.data);
+                    setSecilenLobi(null);
+                  } catch (err) {
+                    alert(err.response?.data?.message || "Güncelleme başarısız");
+                  }
+                }}
+              >
+                Güncelle
+              </Button>
             </>
           )}
-          <Button
-            variant="contained"
-            fullWidth
-            sx={{ mt: 2 }}
-            onClick={async () => {
-              try {
-                await axios.post('http://localhost:4000/api/lobbies/update', {
-                  lobiId: secilenLobi.id,
-                  kurucu: `${user.username}#${user.tag}`,
-                  lobiAdi,
-                  tip,
-                  sifreliMi,
-                  sifre,
-                  oyun: secilenOyun,
-                  baslangicTarihi,
-                  bitisTarihi
-                }, { withCredentials: true });
 
-                alert("Lobi güncellendi!");
-                const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
-                setLobiler(lobilerGuncel.data);
-                setSecilenLobi(null);
-              } catch (err) {
-                alert(err.response?.data?.message || "Güncelleme başarısız");
-              }
-            }}
-          >
-            Güncelle
-          </Button>
-          </>
-        )}
-
-        <Box sx={{ mt: 2 }}>
-          <Typography><strong>Bağlantı:</strong> http://localhost:5173/join/{secilenLobi?.id}</Typography>
-          <Button
-            variant="outlined"
-            size="small"
-            sx={{ mt: 1 }}
-            onClick={() => {
-              navigator.clipboard.writeText(`http://localhost:5173/join/${secilenLobi?.id}`);
-              alert("Bağlantı panoya kopyalandı!");
-            }}
-          >
-            Kopyala
-          </Button>
-        </Box>     
+          <Box sx={{ mt: 2 }}>
+            <Typography><strong>Bağlantı:</strong> http://localhost:5173/join/{secilenLobi?.id}</Typography>
+            <Button
+              variant="outlined"
+              size="small"
+              sx={{ mt: 1 }}
+              onClick={() => {
+                navigator.clipboard.writeText(`http://localhost:5173/join/${secilenLobi?.id}`);
+                alert("Bağlantı panoya kopyalandı!");
+              }}
+            >
+              Kopyala
+            </Button>
+          </Box>     
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSecilenLobi(null)}>Kapat</Button>

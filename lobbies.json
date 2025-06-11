@@ -27,7 +27,8 @@
     "createdAt": "2025-06-09T15:01:40.103Z",
     "katilanlar": [
       "sare#7423",
-      "sar3#3991"
+      "sar3#3991",
+      "undefined#undefined"
     ]
   },
   {
@@ -56,7 +57,10 @@
     "baslangicTarihi": "2025-06-10T10:01",
     "bitisTarihi": "2025-06-20T18:01",
     "createdAt": "2025-06-09T21:59:43.344Z",
-    "katilanlar": [],
+    "katilanlar": [
+      "test#0594",
+      "test#8029"
+    ],
     "kurucuCikmaZamani": "2025-06-09T21:59:54.318Z"
   },
   {
@@ -73,5 +77,18 @@
     "katilanlar": [
       "sar3#3991"
     ]
+  },
+  {
+    "id": 1749601438348,
+    "ad": "sare",
+    "tip": "normal",
+    "sifreli": true,
+    "sifre": "1234",
+    "kurucu": "undefined#undefined",
+    "oyun": "Tombala",
+    "baslangicTarihi": null,
+    "bitisTarihi": null,
+    "createdAt": "2025-06-11T00:23:58.348Z",
+    "katilanlar": []
   }
 ]
