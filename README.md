@@ -77,6 +77,3 @@ Tag: 7423
    - Oyun mantığını ve arayüzünü ekleyin
    - Ana uygulamaya entegre edin
 
-## 📝 Lisans
-
-Bu proje MIT lisansı altında lisanslanmıştır.
