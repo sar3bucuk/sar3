@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext();
 
 // users.json dosyasını oku
 const readUsers = async () => {
@@ -39,35 +39,30 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/auth/me', { withCredentials: true });
-      console.log('Backend response:', JSON.stringify(response.data, null, 2));
-      
-      // Kullanıcı bilgilerini kontrol et
-      const userData = response.data;
-      if (!userData || typeof userData !== 'object') {
-        console.error('Geçersiz kullanıcı verisi:', userData);
-        setError('Geçersiz kullanıcı verisi');
+      const token = localStorage.getItem('token');
+      if (!token) {
         setUser(null);
+        setLoading(false);
         return;
       }
 
-      // users.json'dan kullanıcı bilgilerini bul
-      const userInfo = users.find(u => u.email === userData.email);
-      if (userInfo) {
-        setUser({
-          ...userData,
-          username: userInfo.username,
-          tag: userInfo.tag
-        });
-      } else {
-        setUser(userData);
-      }
+      const response = await axios.get('http://localhost:4000/api/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        withCredentials: true
+      });
 
-      setError(null);
-    } catch (err) {
-      console.error('Auth check error:', err);
+      if (response.data) {
+        setUser(response.data);
+      } else {
+        setUser(null);
+        localStorage.removeItem('token');
+      }
+    } catch (error) {
+      console.error('Kullanıcı oturumu bulunamadı:', error);
       setUser(null);
-      setError(err.response?.data?.message || 'Authentication failed');
+      localStorage.removeItem('token');
     } finally {
       setLoading(false);
     }
@@ -75,55 +70,66 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAuth();
-  }, [users]); // users değiştiğinde checkAuth'u tekrar çalıştır
+  }, []);
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:4000/api/auth/login', 
-        { email, password },
-        { withCredentials: true }
-      );
-      console.log('Login response:', JSON.stringify(response.data, null, 2));
+      console.log('Login isteği hazırlanıyor:', { email, password });
       
-      // Kullanıcı bilgilerini kontrol et
-      const userData = response.data.user || response.data;
-      if (!userData || typeof userData !== 'object') {
-        console.error('Geçersiz kullanıcı verisi:', userData);
-        setError('Geçersiz kullanıcı verisi');
-        throw new Error('Geçersiz kullanıcı verisi');
+      if (!email || !password) {
+        console.error('Eksik bilgi:', { email: !email, password: !password });
+        throw new Error('Email ve şifre gereklidir');
       }
 
-      // users.json'dan kullanıcı bilgilerini bul
-      const userInfo = users.find(u => u.email === userData.email);
-      if (userInfo) {
-        const fullUserData = {
-          ...userData,
-          username: userInfo.username,
-          tag: userInfo.tag
-        };
-        setUser(fullUserData);
-        return fullUserData;
-      }
+      console.log('Login isteği gönderiliyor...');
+      const response = await axios.post('http://localhost:4000/api/auth/login', {
+        email,
+        password
+      }, { 
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
 
-      setUser(userData);
-      setError(null);
-      return userData;
-    } catch (err) {
-      console.error('Login error:', err);
-      setError(err.response?.data?.message || 'Login failed');
-      throw err;
+      console.log('Login yanıtı alındı:', response.data);
+
+      if (response.data.token) {
+        console.log('Token alındı, kullanıcı bilgileri kaydediliyor');
+        localStorage.setItem('token', response.data.token);
+        setUser(response.data.user);
+        return true;
+      }
+      console.log('Token alınamadı');
+      return false;
+    } catch (error) {
+      console.error('Giriş hatası detayları:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        headers: error.response?.headers,
+        request: error.request,
+        config: error.config
+      });
+      
+      if (error.response?.data?.details) {
+        throw new Error(error.response.data.details.reason);
+      }
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error(error.message || 'Giriş başarısız');
     }
   };
 
   const logout = async () => {
     try {
       await axios.post('http://localhost:4000/api/auth/logout', {}, { withCredentials: true });
+    } catch (error) {
+      console.error('Çıkış hatası:', error);
+    } finally {
+      localStorage.removeItem('token');
       setUser(null);
-      setError(null);
-    } catch (err) {
-      console.error('Logout error:', err);
-      setError(err.response?.data?.message || 'Logout failed');
-      throw err;
     }
   };
 

@@ -88,10 +88,15 @@ const LoginPage = () => {
     }
 
     try {
+      console.log('Giriş denemesi başlıyor:', { email, password });
       const hashedPassword = SHA256(password).toString();
+      console.log('Hash\'lenmiş şifre:', hashedPassword);
+      
       const success = await login(email, hashedPassword);
+      console.log('Login sonucu:', success);
 
       if (success) {
+        console.log('Giriş başarılı, dashboard\'a yönlendiriliyor');
         // Beni hatırla seçeneği işaretliyse bilgileri kaydet
         if (rememberMe) {
           localStorage.setItem('rememberedEmail', email);
@@ -106,7 +111,19 @@ const LoginPage = () => {
         navigate('/dashboard');
       }
     } catch (error) {
-      setError(error.response?.data?.message || "Giriş başarısız");
+      console.error('Login hatası detayları:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response?.data
+      });
+      
+      if (error.response?.data?.details) {
+        setError(error.response.data.details.reason || error.response.data.message);
+      } else if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else {
+        setError(error.message || "Giriş başarısız");
+      }
     }
   };
 
@@ -264,12 +281,12 @@ const LoginPage = () => {
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 2 }}>
             <TextField
               fullWidth
-              label="Email"
+              label="E-posta"
               variant="outlined"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               size="small"
-              autoComplete="email"
+              autoComplete="username"
               sx={{
                 mb: 1.5,
                 '& .MuiOutlinedInput-root': {

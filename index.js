@@ -6,19 +6,23 @@ const MemoryStore = require('memorystore')(session);
 const fs = require('fs');
 const cors = require('cors');
 const path = require('path');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = 4000;
+const JWT_SECRET = 'sar3-secret-key';
 
 app.use(cors({
   origin: 'http://localhost:5173',
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(session({
-  secret: 'sar3-secret-key',
+  secret: JWT_SECRET,
   resave: false,
   saveUninitialized: false,
   store: new MemoryStore({ checkPeriod: 86400000 }),
@@ -43,14 +47,90 @@ const writeLobbies = (data) => fs.writeFileSync(LOBBIES_FILE, JSON.stringify(dat
 
 // 🔐 Giriş işlemi
 app.post('/api/auth/login', (req, res) => {
+  console.log('Gelen istek body:', req.body);
+  
   const { email, password } = req.body;
+  console.log('Login isteği alındı:', { email, password });
+  
+  if (!email || !password) {
+    console.log('Eksik bilgi:', { email, password });
+    return res.status(400).json({ 
+      message: 'Email ve şifre gereklidir',
+      details: { 
+        email: !email ? 'Email eksik' : null,
+        password: !password ? 'Şifre eksik' : null
+      }
+    });
+  }
+
+  if (typeof email !== 'string' || typeof password !== 'string') {
+    console.log('Geçersiz veri tipi:', { 
+      email: typeof email, 
+      password: typeof password 
+    });
+    return res.status(400).json({ 
+      message: 'Geçersiz veri tipi',
+      details: {
+        email: typeof email !== 'string' ? 'Email string olmalı' : null,
+        password: typeof password !== 'string' ? 'Şifre string olmalı' : null
+      }
+    });
+  }
+  
   const users = readUsers();
-  const user = users.find(u => u.email === email && u.password === password);
+  console.log('Mevcut kullanıcılar:', users.map(u => ({ 
+    email: u.email,
+    username: u.username, 
+    tag: u.tag,
+    password: u.password 
+  })));
+  
+  // Önce kullanıcıyı email ile bul
+  const user = users.find(u => u.email === email);
+  console.log('Kullanıcı bulundu mu:', user ? 'Evet' : 'Hayır');
+  
   if (user) {
-    req.session.user = { email: user.email };
-    res.json({ message: 'Giriş başarılı', user: req.session.user });
+    console.log('Şifre karşılaştırması:', {
+      girilen: password,
+      kayitli: user.password,
+      eslesme: password === user.password
+    });
+  }
+  
+  if (user && password === user.password) {
+    const token = jwt.sign(
+      { 
+        username: user.username,
+        email: user.email,
+        tag: user.tag
+      }, 
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    console.log('Token oluşturuldu');
+    res.json({ 
+      message: 'Giriş başarılı', 
+      token,
+      user: {
+        username: user.username,
+        email: user.email,
+        tag: user.tag
+      }
+    });
   } else {
-    res.status(401).json({ message: 'Geçersiz email veya şifre' });
+    const userExists = users.some(u => u.email === email);
+    console.log('Giriş başarısız:', { 
+      userExists,
+      reason: userExists ? 'Şifre hatalı' : 'Kullanıcı bulunamadı'
+    });
+    res.status(401).json({ 
+      message: 'Geçersiz email veya şifre',
+      details: {
+        userExists,
+        reason: userExists ? 'Şifre hatalı' : 'Kullanıcı bulunamadı'
+      }
+    });
   }
 });
 
@@ -74,52 +154,62 @@ app.post('/api/auth/register', (req, res) => {
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) return res.status(500).json({ message: 'Çıkış sırasında hata oluştu' });
-    res.clearCookie('connect.sid');
-    res.json({ message: 'Çıkış başarılı' });
-  });
+  res.json({ message: 'Çıkış başarılı' });
 });
 
-app.get('/api/auth/user', (req, res) => {
-  if (req.session.user) {
+app.get('/api/auth/me', (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  
+  if (!token) {
+    return res.status(401).json({ message: 'Token bulunamadı' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
     const users = readUsers();
-    const fullUser = users.find(u => u.email === req.session.user.email);
-    res.json({ user: fullUser });
-  } else {
-    res.status(401).json({ message: 'Giriş yapılmamış' });
+    const user = users.find(u => u.username === decoded.username);
+    
+    if (user) {
+      res.json({
+        username: user.username,
+        email: user.email,
+        tag: user.tag
+      });
+    } else {
+      res.status(404).json({ message: 'Kullanıcı bulunamadı' });
+    }
+  } catch (error) {
+    res.status(401).json({ message: 'Geçersiz token' });
   }
 });
 
 app.post('/api/lobbies', (req, res) => {
   const { lobiAdi, tip, sifreliMi, sifre, kurucu, baslangicTarihi, bitisTarihi, secilenOyun } = req.body;
-  if (!lobiAdi || !tip || !kurucu || !secilenOyun) {
-    return res.status(400).json({
-      message: `Eksik bilgi: ${[
-        !lobiAdi && 'lobiAdi',
-        !tip && 'tip',
-        !kurucu && 'kurucu',
-        !secilenOyun && 'secilenOyun'
-      ].filter(Boolean).join(', ')}`
-    });
+
+  // Kullanıcının zaten bir lobisi var mı kontrol et
+  const existingLobi = readLobbies().find(l => l.kurucu === kurucu);
+  if (existingLobi) {
+    return res.status(400).json({ message: 'Zaten aktif bir lobiniz bulunmaktadır. Yeni lobi oluşturmak için mevcut lobinizi kapatın.' });
   }
-  const lobbies = readLobbies();
+
   const yeniLobi = {
-    id: Date.now(),
+    id: Date.now().toString(),
     ad: lobiAdi,
     tip,
     sifreli: sifreliMi,
     sifre: sifreliMi ? sifre : null,
     kurucu,
-    oyun: secilenOyun,
     baslangicTarihi: tip === 'etkinlik' ? baslangicTarihi : null,
     bitisTarihi: tip === 'etkinlik' ? bitisTarihi : null,
-    createdAt: new Date().toISOString(),
-    katilanlar: [kurucu]  // ← kurucuyu otomatik ekle
+    oyun: secilenOyun,
+    katilanlar: [kurucu],
+    createdAt: new Date().toISOString()
   };
+
+  const lobbies = readLobbies();
   lobbies.push(yeniLobi);
   writeLobbies(lobbies);
-  res.json({ message: 'Lobi oluşturuldu', lobi: yeniLobi });
+  res.json(yeniLobi);
 });
 
 app.get('/api/lobbies', (req, res) => {
