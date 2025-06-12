@@ -1,77 +1,79 @@
-🎮 Oyun Merkezi (Game Hub) Projesi
+# Oyun Merkezi Projesi
 
-Bu proje, çok oyunculu oyunların oynanabildiği bir web tabanlı oyun merkezi platformudur. Kullanıcılar bu merkezde oturum açabilir, çeşitli oyunlara ait lobiler oluşturabilir, lobilerde bir araya gelip oyunlar oynayabilirler. Platform, Lerna tabanlı monorepo yapısı kullanarak oyun merkezini ve oyunları ayrı paketlerde yönetir.
+Bu proje, çoklu oyun lobisi oluşturma ve yönetme imkanı sunan bir web uygulamasıdır.
 
-⚙️ Teknolojiler
+## 🎮 Özellikler
 
-React 18 (frontend)
+- Kullanıcı kaydı ve girişi
+- Oyun lobisi oluşturma ve yönetme
+- Normal ve etkinlik tipi lobiler
+- Şifreli lobi desteği
+- Gerçek zamanlı lobi durumu takibi
+- Etkinlik geri sayımı
+- Kullanıcı dostu arayüz
 
-Express.js (backend)
+## 🚀 Kurulum
 
-Lerna v8 (monorepo yönetimi)
-
-Material UI v6 (görünüm)
-
-Vite (frontend derleyici)
-
-SHA-256 (şifreleme)
-
-MemoryStore (session yönetimi)
-
-users.json, lobbies.json (veri dosyaları)
-
-📂 Ana Modüller
-
-1. Kullanıcı Girişi & Kayıt
-
-SHA-256 şifreleme ile kullanıcı kaydı ve oturum açma
-
-Session tabanlı oturum yönetimi (express-session)
-
-"Beni Hatırla" ve "Şifremi Unuttum" alanları
-
-2. Dashboard
-
-Lobilerin listelenmesi
-
-Lobiler için filtreleme (arama, şifreli vs.)
-
-Yeni lobi oluşturma (normal/etkinlik)
-
-Lobi bilgileri: oyun, başlangıç-bitiş, kurucu, şifre durumu
-
-Lobiye katılma / ayrılma işlemleri
-
-Kurucu için: lobiyi güncelleme/silme
-
-Lobiye katılanları listeleme
-
-Lobinin bağlantı linkini kopyalama
-
-3. Lobilerde Otomatik Davranışlar
-
-Kurucu lobiden çıkarsa 8 saat içinde lobi kapanır
-
-Etkinlik lobileri her zaman öncelikli listelenir
-
-Etkinliğe 24 saatten az kaldıysa geri sayım görünür
-
-4. Oyun Sayfaları
-
-TombalaOyunEkrani sayfası oyunlar/tombala altında
-
-Frontend tarafından /tombala rotasından ulaşılır
-
-React bileşenleri: OyunAlani, OyuncuListesi, CekilenSayilar vb.
-
-🌟 Kurulum ve Başlatma
-
-# 1. Ana dizinde bağlılıkları yükle
+1. Gerekli paketleri yükleyin:
+```bash
 npm install
+```
 
-# 2. Frontend'i başlat
+2. Backend sunucusunu başlatın:
+```bash
+node index.js
+```
+
+3. Frontend uygulamasını başlatın:
+```bash
 cd packages/oyun-merkezi
 npm run dev
+```
 
-# 3. Backend'i başlat
-node index.js
+## 🔧 Teknolojiler
+
+- Frontend:
+  - React
+  - Material-UI
+  - Axios
+  - React Router
+
+- Backend:
+  - Node.js
+  - Express
+  - JSON dosya sistemi
+
+## 👥 Kullanıcı Bilgileri
+
+Test için kullanabileceğiniz örnek hesaplar:
+
+```
+Email: test@example.com
+Password: 1234
+Username: sar3
+Tag: 3991
+
+Email: test1@example.com
+Password: 1234
+Username: sare
+Tag: 7423
+```
+
+## 🔐 Güvenlik
+
+- Şifreler SHA-256 ile hashlenerek saklanır
+- Oturum yönetimi için HTTP-only çerezler kullanılır
+- API istekleri için CORS koruması
+
+## 🎯 Geliştirme
+
+1. Yeni bir özellik eklemek için:
+   - İlgili bileşeni `components/` altında oluşturun
+   - Gerekli state yönetimi için `contexts/` altında context ekleyin
+   - Sayfa bileşenini `pages/` altında oluşturun
+
+2. Yeni bir oyun eklemek için:
+   - `packages/oyunlar/` altında yeni bir modül oluşturun
+   - Oyun mantığını ve arayüzünü ekleyin
+   - Ana uygulamaya entegre edin
+
