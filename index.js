@@ -13,7 +13,14 @@ const PORT = 4000;
 const JWT_SECRET = 'sar3-secret-key';
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: function (origin, callback) {
+    // localhost'tan gelen tüm isteklere izin ver
+    if (!origin || origin.startsWith('http://localhost:')) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS policy violation'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -217,13 +224,14 @@ app.get('/api/lobbies', (req, res) => {
 
   const now = new Date();
   const updatedLobbies = lobbies.filter(lobi => {
-    if (lobi.tip === 'normal' && !lobi.kurucu && lobi.kurucuCikmaZamani) {
+    if (lobi.tip === 'normal' && lobi.kurucuCikmaZamani) {
       const cikisZamani = new Date(lobi.kurucuCikmaZamani);
       const farkSaat = (now - cikisZamani) / (1000 * 60 * 60);
-      return farkSaat < 8; 
+      return farkSaat < 8;
     }
     return true;
   });
+
   if (updatedLobbies.length !== lobbies.length) {
     writeLobbies(updatedLobbies);
   }
@@ -260,10 +268,11 @@ app.post('/api/lobbies/leave', (req, res) => {
   if (!lobi.katilanlar || !lobi.katilanlar.includes(kullanici)) {
     return res.status(400).json({ message: 'Kullanıcı zaten lobide değil' });
   }
-  if (lobi.kurucu === kullanici) {
-    lobi.kurucu = null;
-    lobi.kurucuCikmaZamani = new Date().toISOString();  
+
+  if (lobi.kurucu === kullanici && lobi.tip === 'normal') {
+    lobi.kurucuCikmaZamani = new Date().toISOString();
   }
+  
   lobi.katilanlar = lobi.katilanlar.filter(k => k !== kullanici);
   lobbies[index] = lobi;
   writeLobbies(lobbies);
@@ -302,6 +311,30 @@ app.post('/api/lobbies/update', (req, res) => {
   };
   writeLobbies(lobbies);
   res.json({ message: 'Lobi güncellendi', lobi: lobbies[index] });
+});
+
+// Kullanıcının kurucu olduğu lobiyi döndür (username#tag ile tam eşleşme)
+app.get('/api/lobbies/user/:username', (req, res) => {
+  const { username } = req.params;
+  const lobbies = readLobbies();
+  const userLobi = lobbies.find(lobi => lobi.kurucu === username);
+  if (!userLobi) {
+    return res.status(404).json({ message: 'Kullanıcının lobisi yok' });
+  }
+  res.json(userLobi);
+});
+
+// Lobi ID'sine göre lobi getir
+app.get('/api/lobbies/:lobiId', (req, res) => {
+  const { lobiId } = req.params;
+  const lobbies = readLobbies();
+  const lobi = lobbies.find(l => l.id === lobiId);
+  
+  if (!lobi) {
+    return res.status(404).json({ message: 'Lobi bulunamadı' });
+  }
+  
+  res.json(lobi);
 });
 
 // 🚀 Sunucuyu başlat

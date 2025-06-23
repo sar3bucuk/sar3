@@ -48,6 +48,8 @@ const DashboardPage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingLobiId, setEditingLobiId] = useState(null);
   const [lobiAdi, setLobiAdi] = useState('');
   const [tip, setTip] = useState('normal');
   const [sifreliMi, setSifreliMi] = useState(false);
@@ -87,13 +89,15 @@ const DashboardPage = () => {
       setBaslangicTarihi('');
       setBitisTarihi('');
       setLobiSifresi('');
+      setIsEditing(false);
+      setEditingLobiId(null);
     }
   }, [secilenLobi]);
 
   useEffect(() => {
     // Kullanıcının lobisini kontrol et
     const checkUserLobi = async () => {
-      if (!user?.username) return; // Kullanıcı yoksa kontrol etme
+      if (!user?.username) return; 
       try {
         const response = await axios.get(`http://localhost:4000/api/lobbies/user/${user.username}`, { withCredentials: true });
         setUserLobi(response.data);
@@ -817,13 +821,17 @@ const DashboardPage = () => {
         </Container>
       </Box>
 
-      <Dialog open={openModal} onClose={() => setOpenModal(false)}>
+      <Dialog open={openModal} onClose={() => {
+        setOpenModal(false);
+        setIsEditing(false);
+        setEditingLobiId(null);
+      }}>
         <DialogTitle sx={{ 
           background: theme.palette.mode === 'dark'
             ? alpha(theme.palette.background.paper, 0.3)
             : alpha('#7B1FA2', 0.3),
           color: '#fff'
-        }}>Yeni Lobi Oluştur</DialogTitle>
+        }}>{isEditing ? 'Lobiyi Düzenle' : 'Yeni Lobi Oluştur'}</DialogTitle>
         <DialogContent sx={{ 
           display: 'flex', 
           flexDirection: 'column', 
@@ -912,7 +920,11 @@ const DashboardPage = () => {
         </DialogContent>
         <DialogActions>
           <Button 
-            onClick={() => setOpenModal(false)}
+            onClick={() => {
+              setOpenModal(false);
+              setIsEditing(false);
+              setEditingLobiId(null);
+            }}
             sx={{ color: '#7B1FA2' }}
           >
             İptal
@@ -922,26 +934,47 @@ const DashboardPage = () => {
             onClick={async () => {
               try {
                 const kurucu = `${user.username}#${user.tag}`;
-                const response = await axios.post('http://localhost:4000/api/lobbies', {
-                  lobiAdi, 
-                  tip, 
-                  sifreliMi, 
-                  sifre, 
-                  kurucu, 
-                  baslangicTarihi, 
-                  bitisTarihi, 
-                  secilenOyun
-                }, { withCredentials: true });
+                if (isEditing) {
+                  // Update existing lobby
+                  const response = await axios.post('http://localhost:4000/api/lobbies/update', {
+                    lobiId: editingLobiId,
+                    kurucu,
+                    lobiAdi,
+                    tip,
+                    sifreliMi,
+                    sifre,
+                    oyun: secilenOyun,
+                    baslangicTarihi,
+                    bitisTarihi
+                  }, { withCredentials: true });
+                  
+                  alert("Lobi başarıyla güncellendi!");
+                } else {
+                  // Create new lobby
+                  const response = await axios.post('http://localhost:4000/api/lobbies', {
+                    lobiAdi, 
+                    tip, 
+                    sifreliMi, 
+                    sifre, 
+                    kurucu, 
+                    baslangicTarihi, 
+                    bitisTarihi, 
+                    secilenOyun
+                  }, { withCredentials: true });
+                  
+                  alert("Lobi başarıyla oluşturuldu!");
+                }
                 
                 const lobilerGuncel = await axios.get('http://localhost:4000/api/lobbies', { withCredentials: true });
                 setLobiler(lobilerGuncel.data);
                 setUserLobi(lobilerGuncel.data.find(l => l.kurucu === kurucu));
                 
-                alert("Lobi başarıyla oluşturuldu!");
                 setOpenModal(false);
+                setIsEditing(false);
+                setEditingLobiId(null);
               } catch (error) {
-                console.error("Lobi oluşturma hatası:", error.response?.data || error.message);
-                alert(error.response?.data?.message || "Lobi oluşturulamadı.");
+                console.error("Lobi işlemi hatası:", error.response?.data || error.message);
+                alert(error.response?.data?.message || "İşlem başarısız oldu.");
               }
             }}
             sx={{ 
@@ -952,7 +985,7 @@ const DashboardPage = () => {
               }
             }}
           >
-            Oluştur
+            {isEditing ? 'Güncelle' : 'Oluştur'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1048,7 +1081,7 @@ const DashboardPage = () => {
                   backgroundColor: alpha('#7B1FA2', 0.9)
                 }
               }}
-              onClick={() => navigate(`/oyun/${encodeURIComponent(secilenLobi.oyun)}`)}
+              onClick={() => navigate(`/oyun/${encodeURIComponent(secilenLobi.oyun)}/${secilenLobi.id}`)}
             >
               Oyuna Katıl
             </Button>
@@ -1191,6 +1224,8 @@ const DashboardPage = () => {
                   setSifre(secilenLobi.sifre || '');
                   setBaslangicTarihi(secilenLobi.baslangicTarihi || '');
                   setBitisTarihi(secilenLobi.bitisTarihi || '');
+                  setIsEditing(true);
+                  setEditingLobiId(secilenLobi.id);
                   setOpenModal(true);
                   setSecilenLobi(null);
                 }}

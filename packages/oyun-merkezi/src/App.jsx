@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ColorModeContext } from './contexts/ColorModeContext';
@@ -12,6 +12,33 @@ import { AuthProvider } from './contexts/AuthContext';
 const PrivateRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem('token');
   return isAuthenticated ? children : <Navigate to="/" />;
+};
+
+// Game redirect component
+const GameRedirect = () => {
+  const { oyunAdi, lobiId } = useParams();
+  
+  React.useEffect(() => {
+    // Redirect to the games application with lobby ID if available
+    const gameUrl = lobiId 
+      ? `http://localhost:3001/oyun/${oyunAdi}/${lobiId}`
+      : `http://localhost:3001/oyun/${oyunAdi}`;
+    window.location.href = gameUrl;
+  }, [oyunAdi, lobiId]);
+  
+  return (
+    <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+      fontSize: '18px'
+    }}>
+      Oyun yükleniyor...
+    </div>
+  );
 };
 
 function App() {
@@ -98,6 +125,22 @@ function App() {
                 element={
                   <PrivateRoute>
                     <OyunDetayPage />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/oyun/:oyunAdi/:lobiId"
+                element={
+                  <PrivateRoute>
+                    <GameRedirect />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/oyun/:oyunAdi"
+                element={
+                  <PrivateRoute>
+                    <GameRedirect />
                   </PrivateRoute>
                 }
               />
