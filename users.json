@@ -1,2 +1,42 @@
 [
+  {
+    "email": "sar3@gmail.com",
+    "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "username": "sar3",
+    "tag": 6765,
+    "avatar": "/avatars/bubbles.jpg",
+    "points": 125
+  },
+  {
+    "email": "curry@gmail.com",
+    "password": "5994471abb01112afcc18159f6cc74b4f511b99806da59b3caf5a9c173cacfc5",
+    "username": "curry",
+    "tag": 4108,
+    "avatar": "/avatars/fred.png",
+    "points": 1250
+  },
+  {
+    "email": "thuerris@gmail.com",
+    "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "username": "thuerris",
+    "tag": 1103,
+    "avatar": "/avatars/velma.png",
+    "points": 300
+  },
+  {
+    "email": "pyopha@gmail.com",
+    "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "username": "pyopha",
+    "tag": 5567,
+    "avatar": "/avatars/Mordecai.jpg",
+    "points": 25
+  },
+  {
+    "email": "emine@gmail.com",
+    "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
+    "username": "min.emine",
+    "tag": 4665,
+    "avatar": "/avatars/buttercup.jpg",
+    "points": 0
+  }
 ]

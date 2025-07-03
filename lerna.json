@@ -1,8 +1,10 @@
 {
   "version": "0.0.0",
-  "packages": [
-    "packages/*",
-    "packages/oyunlar/*",
-    "packages/oyun-merkezi/*"
-  ]
+  "packages": ["packages/*"],
+  "npmClient": "npm",
+  "command": {
+    "bootstrap": {
+      "npmClientArgs": ["--legacy-peer-deps"]
+    }
+  }
 }

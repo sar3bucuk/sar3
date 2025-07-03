@@ -85,7 +85,7 @@ const OyunDetayPage = () => {
       <Container maxWidth="lg">
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/dashboard?section=games')}
           sx={{
             color: '#fff',
             mb: 3,

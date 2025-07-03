@@ -3,10 +3,24 @@
   "version": "1.0.0",
   "private": true,
   "workspaces": [
-    "oyun-merkezi",
-    "oyunlar"
+    "packages/*"
   ],
+  "scripts": {
+    "bootstrap": "lerna bootstrap",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "nodemon index.js",
+    "dev:frontend": "lerna run dev --parallel",
+    "dev:all": "concurrently \"npm run dev:backend\" \"lerna run dev --parallel\"",
+    "build": "lerna run build",
+    "preview": "lerna run preview --parallel",
+    "lint": "lerna run lint",
+    "clean": "lerna clean",
+    "test": "lerna run test",
+    "start": "node index.js",
+    "start:all": "concurrently \"npm start\" \"lerna run dev --parallel\""
+  },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "lerna": "^8.2.2",
     "nodemon": "^3.0.2"
   },

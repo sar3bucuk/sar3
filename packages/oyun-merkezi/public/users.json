@@ -3,30 +3,35 @@
     "email": "test1234@example.com",
     "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
     "username": "sar3",
-    "tag": 1521
+    "tag": 1521,
+    "points": 0
   },
   {
     "email": "test@example.com",
     "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
     "username": "sar3",
-    "tag": 3991
+    "tag": 3991,
+    "points": 0
   },
   {
     "email": "test1@example.com",
     "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
     "username": "sare",
-    "tag": 7423
+    "tag": 7423,
+    "points": 0
   },
   {
     "email": "test12344@example.com",
     "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
     "username": "sarere",
-    "tag": 8421
+    "tag": 8421,
+    "points": 0
   },
   {
     "email": "sekjfneskfjneskjf",
     "password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4",
     "username": "sar3",
-    "tag": 3416
+    "tag": 3416,
+    "points": 0
   }
 ]

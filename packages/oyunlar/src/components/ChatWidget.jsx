@@ -1,14 +1,68 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box, IconButton, Paper, Typography, TextField, Button, Badge } from '@mui/material';
+import { Box, IconButton, Paper, Typography, TextField, Button, Badge, Menu, MenuItem } from '@mui/material';
 import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-const ChatWidget = () => {
+const ChatWidget = ({ lobiId }) => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [unread, setUnread] = useState(0);
+  const [anchorEl, setAnchorEl] = useState(null);
   const messagesEndRef = useRef(null);
+
+  // Lobi ID'sine göre localStorage key'i oluştur
+  const getStorageKey = () => `chat_${lobiId}`;
+
+  // Chat geçmişini localStorage'dan yükle
+  useEffect(() => {
+    if (lobiId) {
+      try {
+        const savedMessages = localStorage.getItem(getStorageKey());
+        if (savedMessages) {
+          const parsedMessages = JSON.parse(savedMessages);
+          // Tarihleri Date objesine çevir
+          const messagesWithDates = parsedMessages.map(msg => ({
+            ...msg,
+            time: new Date(msg.time)
+          }));
+          setMessages(messagesWithDates);
+        }
+      } catch (error) {
+        console.error('Chat geçmişi yüklenirken hata:', error);
+      }
+    }
+  }, [lobiId]);
+
+  // Mesajları localStorage'a kaydet
+  const saveMessagesToStorage = (newMessages) => {
+    if (lobiId) {
+      try {
+        localStorage.setItem(getStorageKey(), JSON.stringify(newMessages));
+      } catch (error) {
+        console.error('Chat geçmişi kaydedilirken hata:', error);
+      }
+    }
+  };
+
+  // Chat geçmişini temizle
+  const clearChat = () => {
+    setMessages([]);
+    if (lobiId) {
+      localStorage.removeItem(getStorageKey());
+    }
+    setAnchorEl(null);
+  };
+
+  // Menu işlemleri
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
 
   useEffect(() => {
     if (open && messagesEndRef.current) {
@@ -19,7 +73,10 @@ const ChatWidget = () => {
 
   const handleSend = () => {
     if (input.trim() === '') return;
-    setMessages([...messages, { text: input, from: 'user', time: new Date() }]);
+    const newMessage = { text: input, from: 'user', time: new Date() };
+    const newMessages = [...messages, newMessage];
+    setMessages(newMessages);
+    saveMessagesToStorage(newMessages);
     setInput('');
     if (!open) setUnread(unread + 1);
   };
@@ -61,9 +118,18 @@ const ChatWidget = () => {
             <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: 18 }}>
               Sohbet
             </Typography>
-            <IconButton size="small" onClick={() => setOpen(false)} sx={{ color: 'white' }}>
-              <CloseIcon />
-            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <IconButton 
+                size="small" 
+                onClick={handleMenuOpen}
+                sx={{ color: 'white' }}
+              >
+                <MoreVertIcon />
+              </IconButton>
+              <IconButton size="small" onClick={() => setOpen(false)} sx={{ color: 'white' }}>
+                <CloseIcon />
+              </IconButton>
+            </Box>
           </Box>
           {/* Messages */}
           <Box sx={{
@@ -87,6 +153,8 @@ const ChatWidget = () => {
                 sx={{
                   display: 'flex',
                   justifyContent: msg.from === 'user' ? 'flex-end' : 'flex-start',
+                  flexDirection: 'column',
+                  alignItems: msg.from === 'user' ? 'flex-end' : 'flex-start',
                 }}
               >
                 <Box
@@ -100,10 +168,23 @@ const ChatWidget = () => {
                     fontSize: 15,
                     boxShadow: msg.from === 'user' ? '0 2px 8px #7B1FA244' : 'none',
                     border: msg.from === 'user' ? '1px solid #7B1FA2' : '1px solid #fff1',
+                    mb: 0.5,
                   }}
                 >
                   {msg.text}
                 </Box>
+                <Typography variant="caption" sx={{ 
+                  color: '#aaa', 
+                  fontSize: '0.7rem',
+                  opacity: 0.7,
+                  ml: msg.from === 'user' ? 0 : 1,
+                  mr: msg.from === 'user' ? 1 : 0,
+                }}>
+                  {msg.time.toLocaleTimeString('tr-TR', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </Typography>
               </Box>
             ))}
             <div ref={messagesEndRef} />
@@ -148,6 +229,33 @@ const ChatWidget = () => {
           </Box>
         </Paper>
       )}
+      
+      {/* Chat Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        sx={{ zIndex: 13000 }}
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(40, 18, 60, 0.98)',
+            color: 'white',
+            border: '1px solid #7B1FA2',
+            boxShadow: '0 8px 32px rgba(123,31,162,0.3)',
+          }
+        }}
+      >
+        <MenuItem 
+          onClick={clearChat}
+          sx={{ 
+            color: '#ff6b6b',
+            '&:hover': { bgcolor: 'rgba(255,107,107,0.1)' }
+          }}
+        >
+          🗑️ Sohbeti Temizle
+        </MenuItem>
+      </Menu>
+      
       <Badge
         color="secondary"
         badgeContent={unread > 0 ? unread : null}

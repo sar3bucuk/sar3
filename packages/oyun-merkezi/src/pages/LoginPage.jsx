@@ -61,6 +61,11 @@ const LoginPage = () => {
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetStatus, setResetStatus] = useState({ type: '', message: '' });
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resetStep, setResetStep] = useState(1); // 1: email, 2: new password
   const navigate = useNavigate();
   const { login } = useAuth();
   const theme = useTheme();
@@ -128,32 +133,106 @@ const LoginPage = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!resetEmail) {
-      setResetStatus({ type: 'error', message: 'Lütfen email adresinizi girin' });
-      return;
-    }
+    if (resetStep === 1) {
+      // İlk aşama: Email kontrolü
+      if (!resetEmail) {
+        setResetStatus({ type: 'error', message: 'Lütfen email adresinizi girin' });
+        return;
+      }
 
-    try {
-      const response = await axios.post('http://localhost:4000/api/auth/forgot-password', {
-        email: resetEmail
-      });
+      // Email format kontrolü
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(resetEmail)) {
+        setResetStatus({ type: 'error', message: 'Lütfen geçerli bir email adresi girin' });
+        return;
+      }
 
-      setResetStatus({ 
-        type: 'success', 
-        message: 'Şifre sıfırlama bağlantısı email adresinize gönderildi' 
-      });
-      
-      // 3 saniye sonra dialog'u kapat
-      setTimeout(() => {
-        setForgotPasswordOpen(false);
-        setResetEmail('');
-        setResetStatus({ type: '', message: '' });
-      }, 3000);
-    } catch (error) {
-      setResetStatus({ 
-        type: 'error', 
-        message: error.response?.data?.message || 'Şifre sıfırlama işlemi başarısız oldu' 
-      });
+      try {
+        setResetStatus({ type: 'info', message: 'Email kontrol ediliyor...' });
+        
+        // Email'in var olup olmadığını kontrol et
+        const response = await axios.post('http://localhost:4000/api/auth/check-email', {
+          email: resetEmail
+        });
+
+        // Eğer buraya kadar geldiyse email var demektir
+        setResetStep(2);
+        setResetStatus({ type: 'success', message: 'Email doğrulandı. Şimdi yeni şifrenizi girin.' });
+        
+      } catch (error) {
+        console.error('Email kontrol hatası:', error);
+        
+        let errorMessage = 'Email kontrol edilemedi';
+        
+        if (error.response?.status === 404) {
+          errorMessage = 'Bu email adresi ile kayıtlı kullanıcı bulunamadı';
+        } else if (error.response?.status === 400) {
+          errorMessage = error.response.data.message || 'Geçersiz email adresi';
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message === 'Network Error') {
+          errorMessage = 'Sunucuya bağlanılamıyor. Lütfen internet bağlantınızı kontrol edin.';
+        }
+        
+        setResetStatus({ 
+          type: 'error', 
+          message: errorMessage
+        });
+      }
+    } else {
+      // İkinci aşama: Yeni şifre belirleme
+      if (!newPassword || !confirmNewPassword) {
+        setResetStatus({ type: 'error', message: 'Lütfen tüm alanları doldurun' });
+        return;
+      }
+
+      if (newPassword !== confirmNewPassword) {
+        setResetStatus({ type: 'error', message: 'Şifreler eşleşmiyor' });
+        return;
+      }
+
+      try {
+        setResetStatus({ type: 'info', message: 'Şifre güncelleniyor...' });
+        
+        const response = await axios.post('http://localhost:4000/api/auth/forgot-password', {
+          email: resetEmail,
+          newPassword: newPassword
+        });
+
+        if (response.data.success) {
+          setResetStatus({ 
+            type: 'success', 
+            message: 'Şifreniz başarıyla güncellendi! Giriş sayfasına yönlendiriliyorsunuz...'
+          });
+          
+          // 3 saniye sonra login sayfasına yönlendir
+          setTimeout(() => {
+            setForgotPasswordOpen(false);
+            setResetEmail('');
+            setNewPassword('');
+            setConfirmNewPassword('');
+            setResetStatus({ type: '', message: '' });
+            setResetStep(1);
+            // Login sayfasına yönlendir
+            window.location.reload();
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('Şifre güncelleme hatası:', error);
+        
+        let errorMessage = 'Şifre güncellenemedi';
+        
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.message === 'Network Error') {
+          errorMessage = 'Sunucuya bağlanılamıyor. Lütfen internet bağlantınızı kontrol edin.';
+        }
+        
+        setResetStatus({ 
+          type: 'error', 
+          message: errorMessage
+        });
+      }
     }
   };
 
@@ -260,23 +339,6 @@ const LoginPage = () => {
               objectFit: 'contain',
             }}
           />
-
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              mb: 3,
-              fontWeight: 'bold',
-              background: isDarkMode
-                ? 'linear-gradient(45deg, #9370DB, #4B0082)'
-                : 'linear-gradient(45deg, #800080, #4B0082)',
-              backgroundClip: 'text',
-              textFillColor: 'transparent',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-          </Typography>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 2 }}>
             <TextField
@@ -464,7 +526,10 @@ const LoginPage = () => {
         onClose={() => {
           setForgotPasswordOpen(false);
           setResetEmail('');
+          setNewPassword('');
+          setConfirmNewPassword('');
           setResetStatus({ type: '', message: '' });
+          setResetStep(1);
         }}
         PaperProps={{
           sx: {
@@ -483,34 +548,126 @@ const LoginPage = () => {
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Typography sx={{ mb: 2, color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)' }}>
-            Şifrenizi sıfırlamak için email adresinizi girin. Size şifre sıfırlama bağlantısı göndereceğiz.
+            {resetStep === 1 
+              ? 'Email adresinizi girin. Kayıtlı kullanıcı kontrolü yapılacak.' 
+              : 'Yeni şifrenizi girin.'
+            }
           </Typography>
-          <TextField
-            fullWidth
-            label="Email"
-            variant="outlined"
-            value={resetEmail}
-            onChange={(e) => setResetEmail(e.target.value)}
-            size="small"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                color: isDarkMode ? '#fff' : '#000',
-                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)',
-                '& fieldset': {
-                  borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(128, 0, 128, 0.2)',
+          {resetStep === 1 && (
+            <TextField
+              fullWidth
+              label="Email"
+              variant="outlined"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+              size="small"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  color: isDarkMode ? '#fff' : '#000',
+                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)',
+                  '& fieldset': {
+                    borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(128, 0, 128, 0.2)',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: isDarkMode ? '#9370DB' : '#800080',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: isDarkMode ? '#4B0082' : '#4B0082',
+                  },
                 },
-                '&:hover fieldset': {
-                  borderColor: isDarkMode ? '#9370DB' : '#800080',
+                '& .MuiInputLabel-root': {
+                  color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
                 },
-                '&.Mui-focused fieldset': {
-                  borderColor: isDarkMode ? '#4B0082' : '#4B0082',
-                },
-              },
-              '& .MuiInputLabel-root': {
-                color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
-              },
-            }}
-          />
+              }}
+            />
+          )}
+          {resetStep === 2 && (
+            <>
+              <TextField
+                fullWidth
+                label="Yeni Şifre"
+                type={showNewPassword ? 'text' : 'password'}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                size="small"
+                autoComplete="new-password"
+                sx={{
+                  mb: 1.5,
+                  '& .MuiOutlinedInput-root': {
+                    color: isDarkMode ? '#fff' : '#000',
+                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)',
+                    '& fieldset': {
+                      borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(128, 0, 128, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: isDarkMode ? '#9370DB' : '#800080',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: isDarkMode ? '#4B0082' : '#4B0082',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+                  },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        edge="end"
+                        size="small"
+                        sx={{ color: isDarkMode ? '#9370DB' : '#4B0082' }}
+                      >
+                        {showNewPassword ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <TextField
+                fullWidth
+                label="Yeni Şifreyi Tekrar Girin"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                size="small"
+                autoComplete="new-password"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: isDarkMode ? '#fff' : '#000',
+                    backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.5)',
+                    '& fieldset': {
+                      borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(128, 0, 128, 0.2)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: isDarkMode ? '#9370DB' : '#800080',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: isDarkMode ? '#4B0082' : '#4B0082',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.7)',
+                  },
+                }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        edge="end"
+                        size="small"
+                        sx={{ color: isDarkMode ? '#9370DB' : '#4B0082' }}
+                      >
+                        {showConfirmPassword ? <Visibility /> : <VisibilityOff />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </>
+          )}
           {resetStatus.message && (
             <Alert 
               severity={resetStatus.type} 
@@ -525,15 +682,37 @@ const LoginPage = () => {
             onClick={() => {
               setForgotPasswordOpen(false);
               setResetEmail('');
+              setNewPassword('');
+              setConfirmNewPassword('');
               setResetStatus({ type: '', message: '' });
+              setResetStep(1);
             }}
+            disabled={resetStatus.type === 'info'}
             sx={{ color: isDarkMode ? '#9370DB' : '#800080' }}
           >
             İptal
           </Button>
+          {resetStep === 2 && (
+            <Button
+              onClick={() => {
+                setResetStep(1);
+                setNewPassword('');
+                setConfirmNewPassword('');
+                setResetStatus({ type: '', message: '' });
+              }}
+              sx={{ color: isDarkMode ? '#9370DB' : '#800080' }}
+            >
+              Geri
+            </Button>
+          )}
           <Button
             onClick={handleForgotPassword}
             variant="contained"
+            disabled={
+              resetStatus.type === 'info' || 
+              (resetStep === 1 && !resetEmail.trim()) ||
+              (resetStep === 2 && (!newPassword.trim() || !confirmNewPassword.trim()))
+            }
             sx={{
               background: isDarkMode
                 ? 'linear-gradient(45deg, #9370DB 30%, #4B0082 90%)'
@@ -544,9 +723,16 @@ const LoginPage = () => {
                   ? 'linear-gradient(45deg, #4B0082 30%, #9370DB 90%)'
                   : 'linear-gradient(45deg, #4B0082 30%, #800080 90%)',
               },
+              '&:disabled': {
+                background: 'rgba(128, 128, 128, 0.5)',
+                color: 'rgba(255, 255, 255, 0.5)',
+              },
             }}
           >
-            Gönder
+            {resetStatus.type === 'info' 
+              ? (resetStep === 1 ? 'Kontrol Ediliyor...' : 'Güncelleniyor...') 
+              : (resetStep === 1 ? 'Devam Et' : 'Şifreyi Güncelle')
+            }
           </Button>
         </DialogActions>
       </Dialog>

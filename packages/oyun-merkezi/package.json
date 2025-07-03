@@ -1,6 +1,6 @@
 {
-  "name": "oyun-merkezi",
-  "version": "0.0.0",
+  "name": "@sar3/oyun-merkezi",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,6 +16,7 @@
     "axios": "^1.6.7",
     "crypto-js": "^4.2.0",
     "react": "^18.2.0",
+    "react-confetti": "^6.4.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.1"
   },

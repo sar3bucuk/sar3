@@ -12,9 +12,12 @@ import {
   keyframes,
   styled,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  Dialog,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
-import { Visibility, VisibilityOff, PersonAdd as RegisterIcon, DarkMode, LightMode } from '@mui/icons-material';
+import { Visibility, VisibilityOff, PersonAdd as RegisterIcon, DarkMode, LightMode, CheckCircle } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import SHA256 from 'crypto-js/sha256';
@@ -51,6 +54,7 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const navigate = useNavigate();
   const theme = useTheme();
 
@@ -71,11 +75,15 @@ const RegisterPage = () => {
         username
       });
 
-      alert("Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz...");
-      navigate('/');
+      setShowSuccessDialog(true);
     } catch (error) {
       setError(error.response?.data?.message || "Kayıt işlemi başarısız");
     }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessDialog(false);
+    navigate('/');
   };
 
   return (
@@ -181,23 +189,6 @@ const RegisterPage = () => {
               objectFit: 'contain',
             }}
           />
-
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              mb: 3,
-              fontWeight: 'bold',
-              background: isDarkMode
-                ? 'linear-gradient(45deg, #9370DB, #4B0082)'
-                : 'linear-gradient(45deg, #800080, #4B0082)',
-              backgroundClip: 'text',
-              textFillColor: 'transparent',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-          </Typography>
 
           <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%', mt: 2 }}>
             <TextField
@@ -363,6 +354,143 @@ const RegisterPage = () => {
           </Box>
         </Paper>
       </Container>
+
+      {/* Başarılı Kayıt Dialog */}
+      <Dialog
+        open={showSuccessDialog}
+        onClose={handleSuccessClose}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            background: isDarkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(8px)',
+            borderRadius: 2,
+            border: `1px solid ${isDarkMode ? 'rgba(147, 112, 219, 0.2)' : 'rgba(128, 0, 128, 0.15)'}`,
+            boxShadow: isDarkMode 
+              ? '0 12px 24px rgba(0, 0, 0, 0.4)'
+              : '0 12px 24px rgba(128, 0, 128, 0.15)',
+            overflow: 'hidden',
+            position: 'relative',
+            maxWidth: '320px',
+            margin: '0 auto',
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '3px',
+              background: isDarkMode
+                ? 'linear-gradient(90deg, #9370DB, #4B0082, #9370DB)'
+                : 'linear-gradient(90deg, #800080, #4B0082, #800080)',
+              backgroundSize: '200% 100%',
+              animation: `${keyframes`
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+              `} 3s linear infinite`,
+            }
+          }
+        }}
+      >
+        <DialogContent sx={{ p: 2, textAlign: 'center' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 1.5
+            }}
+          >
+            <Box
+              sx={{
+                width: 50,
+                height: 50,
+                borderRadius: '50%',
+                background: isDarkMode
+                  ? 'linear-gradient(135deg, #9370DB, #4B0082)'
+                  : 'linear-gradient(135deg, #800080, #4B0082)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: isDarkMode
+                  ? '0 4px 12px rgba(147, 112, 219, 0.3)'
+                  : '0 4px 12px rgba(128, 0, 128, 0.3)',
+                animation: `${bounce} 0.8s ease-in-out`,
+                mb: 1
+              }}
+            >
+              <CheckCircle sx={{ fontSize: 24, color: 'white' }} />
+            </Box>
+            
+            <Typography
+              variant="h6"
+              component="h2"
+              sx={{
+                fontWeight: 'bold',
+                color: isDarkMode ? '#fff' : '#000',
+                mb: 1,
+                background: isDarkMode
+                  ? 'linear-gradient(45deg, #9370DB, #4B0082)'
+                  : 'linear-gradient(45deg, #800080, #4B0082)',
+                backgroundClip: 'text',
+                textFillColor: 'transparent',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                fontSize: '1.1rem'
+              }}
+            >
+              Hoş Geldiniz!
+            </Typography>
+            
+            <Typography
+              variant="body2"
+              sx={{
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+                fontSize: '0.85rem',
+                lineHeight: 1.4,
+                maxWidth: '240px'
+              }}
+            >
+              Hesabınız başarıyla oluşturuldu. Giriş sayfasına yönlendiriliyorsunuz...
+            </Typography>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions sx={{ p: 1.5, pt: 0, justifyContent: 'center' }}>
+          <Button
+            variant="contained"
+            onClick={handleSuccessClose}
+            sx={{
+              background: isDarkMode
+                ? 'linear-gradient(45deg, #9370DB, #4B0082)'
+                : 'linear-gradient(45deg, #800080, #4B0082)',
+              color: 'white',
+              fontWeight: 'bold',
+              px: 2.5,
+              py: 0.8,
+              borderRadius: 1.5,
+              textTransform: 'none',
+              fontSize: '0.9rem',
+              boxShadow: isDarkMode
+                ? '0 2px 8px rgba(147, 112, 219, 0.3)'
+                : '0 2px 8px rgba(128, 0, 128, 0.3)',
+              '&:hover': {
+                background: isDarkMode
+                  ? 'linear-gradient(45deg, #4B0082, #9370DB)'
+                  : 'linear-gradient(45deg, #4B0082, #800080)',
+                transform: 'translateY(-1px)',
+                boxShadow: isDarkMode
+                  ? '0 4px 12px rgba(147, 112, 219, 0.4)'
+                  : '0 4px 12px rgba(128, 0, 128, 0.4)',
+              },
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Giriş Sayfasına Git
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

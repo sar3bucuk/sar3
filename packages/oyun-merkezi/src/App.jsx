@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'rea
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ColorModeContext } from './contexts/ColorModeContext';
+import { LanguageProvider } from './contexts/LanguageContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -29,6 +30,7 @@ const GameRedirect = () => {
   return (
     <div style={{ 
       display: 'flex', 
+      flexDirection: 'column',
       justifyContent: 'center', 
       alignItems: 'center', 
       height: '100vh',
@@ -36,21 +38,46 @@ const GameRedirect = () => {
       color: 'white',
       fontSize: '18px'
     }}>
-      Oyun yükleniyor...
+      <img 
+        src="/logoo.png" 
+        alt="sar3 Logo" 
+        style={{ 
+          width: '120px', 
+          height: 'auto', 
+          marginBottom: '20px',
+          filter: 'drop-shadow(0 0 10px rgba(255,255,255,0.3))'
+        }} 
+      />
+      <div style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
+        sar3
+      </div>
+      <div>Oyun yükleniyor...</div>
     </div>
   );
 };
 
 function App() {
-  const [mode, setMode] = useState('light');
+  const [mode, setMode] = useState(() => {
+    const savedMode = localStorage.getItem('theme-mode');
+    return savedMode || 'light';
+  });
 
   const colorMode = useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+        setMode((prevMode) => {
+          const newMode = prevMode === 'light' ? 'dark' : 'light';
+          localStorage.setItem('theme-mode', newMode);
+          return newMode;
+        });
       },
+      setColorMode: (newMode) => {
+        setMode(newMode);
+        localStorage.setItem('theme-mode', newMode);
+      },
+      mode: mode
     }),
-    [],
+    [mode],
   );
 
   const theme = useMemo(
@@ -108,44 +135,46 @@ function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <AuthProvider>
-          <Router>
-            <Routes>
-              <Route path="/" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <PrivateRoute>
-                    <DashboardPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/oyun-detay/:oyunAdi"
-                element={
-                  <PrivateRoute>
-                    <OyunDetayPage />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/oyun/:oyunAdi/:lobiId"
-                element={
-                  <PrivateRoute>
-                    <GameRedirect />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/oyun/:oyunAdi"
-                element={
-                  <PrivateRoute>
-                    <GameRedirect />
-                  </PrivateRoute>
-                }
-              />
-            </Routes>
-          </Router>
+          <LanguageProvider>
+            <Router>
+              <Routes>
+                <Route path="/" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <PrivateRoute>
+                      <DashboardPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/oyun-detay/:oyunAdi"
+                  element={
+                    <PrivateRoute>
+                      <OyunDetayPage />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/oyun/:oyunAdi/:lobiId"
+                  element={
+                    <PrivateRoute>
+                      <GameRedirect />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/oyun/:oyunAdi"
+                  element={
+                    <PrivateRoute>
+                      <GameRedirect />
+                    </PrivateRoute>
+                  }
+                />
+              </Routes>
+            </Router>
+          </LanguageProvider>
         </AuthProvider>
       </ThemeProvider>
     </ColorModeContext.Provider>
