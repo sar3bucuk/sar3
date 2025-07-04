@@ -21,13 +21,6 @@ sar3/
 npm install
 ```
 
-### 2. Lerna Bootstrap
-```bash
-npm run bootstrap
-```
-
-## 🛠️ Geliştirme
-
 ### Tüm Uygulamaları Paralel Çalıştır
 ```bash
 npm run dev
